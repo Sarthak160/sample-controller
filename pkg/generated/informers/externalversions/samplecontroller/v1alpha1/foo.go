@@ -68,6 +68,7 @@ func NewFilteredFooInformer(client versioned.Interface, namespace string, resync
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
+				// options.AllowWatchBookmarks = false
 				return client.SamplecontrollerV1alpha1().Foos(namespace).Watch(context.TODO(), options)
 			},
 		},

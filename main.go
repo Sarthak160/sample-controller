@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 	"k8s.io/sample-controller/pkg/signals"
+
 	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
@@ -53,12 +55,20 @@ func (crt *customRoundTripper) RoundTrip(req *http.Request) (*http.Response, err
 	rsv := ctx.Value("ResourceVersion")
 	// fmt.Println("ResourceVersion:",rsv)
 	// Add your custom header here
-	if rsv !=nil {
+	if rsv != nil {
 		req.Header.Add("keploy-header", rsv.(string))
 	}
-	
-	// Then proceed with the original RoundTripper
-	return crt.rt.RoundTrip(req)
+	fmt.Println("This is the req url", req.Method, ":", req.URL)
+	fmt.Println("-------------------")
+	// fmt.Println("This is the req header", req.Header)
+	// fmt.Println("-------------------")
+
+	res, err := crt.rt.RoundTrip(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return res, err
 }
 
 func main() {
@@ -72,11 +82,11 @@ func main() {
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
 		logger.Error(err, "Error building kubeconfig")
-		klog.FlushAndExit(klog.ExitFlushTimeout, 1)
+		// klog.FlushAndExit(klog.ExitFlushTimeout, 1)
 	}
 
 	cfg.Insecure = true
-
+	cfg.CAFile = ""
 	// Set the WrapTransport function to customize the http.Client
 	cfg.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
 		return &customRoundTripper{rt: rt}

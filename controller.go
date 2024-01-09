@@ -137,12 +137,16 @@ func NewController(
 	// handling Deployment resources. More info on this pattern:
 	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
 	deploymentInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+
 		AddFunc: controller.handleObject,
 		UpdateFunc: func(old, new interface{}) {
 			newDepl := new.(*appsv1.Deployment)
 			oldDepl := old.(*appsv1.Deployment)
 			// fmt.Println("newDepl.ResourceVersion", newDepl.ResourceVersion)
 			// fmt.Println("oldDepl.ResourceVersion", oldDepl.ResourceVersion)
+			// if oldDepl.ResourceVersion == "133097"|| newDepl.ResourceVersion == "133097" {
+			fmt.Println("Inside updateFunc for informers")
+			// }
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
 				// Periodic resync will send update events for all known Deployments.
 				// Two different versions of the same Deployment will always have different RVs.
@@ -281,9 +285,12 @@ func (c *Controller) syncHandler(ctx context.Context, key string) error {
 	// set ResourceVersion in ctx
 	rv := foo.GetResourceVersion()
 
-	if rv!= "" {
+	if rv != "" {
 		ctx = context.WithValue(ctx, "ResourceVersion", rv)
 	}
+
+	// rsv := ctx.Value("ResourceVersion")
+	// fmt.Println("ResourceVersion from ctx after setting: ", rsv)
 
 	deploymentName := foo.Spec.DeploymentName
 	if deploymentName == "" {
